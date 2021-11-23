@@ -9,8 +9,8 @@ using namespace glm;
 
 struct VertexAttributes
 {
-	VertexAttributes() {
-
+	VertexAttributes()
+	{
 	}
 	VertexAttributes(vec3 position, vec3 normal, vec2 texCoord, vec3 tangent, vec3 bitangent)
 	{
@@ -28,7 +28,8 @@ struct VertexAttributes
 	vec3 bitangent;
 };
 
-struct VertexOut {
+struct VertexOut
+{
 	vec3 lightDir;
 	vec3 viewDir;
 };
@@ -46,52 +47,57 @@ struct ShaderUniforms
 
 struct ShaderSamplers
 {
-	Texture* diffuse;
-	Texture* specular;
-	Texture* normal;
+	Texture *diffuse;
+	Texture *specular;
+	Texture *normal;
 };
 
-static vec3 interp(vec3 *vs, vec2 uv) {
+static vec3 interp(vec3 *vs, vec2 uv)
+{
 	vec3 p = vs[0] * (1 - uv.x - uv.y) + vs[1] * uv.x + vs[2] * uv.y;
 	return p;
 }
 
-static vec2 interp(vec2 *vs, vec2 uv) {
+static vec2 interp(vec2 *vs, vec2 uv)
+{
 	vec2 p = vs[0] * (1 - uv.x - uv.y) + vs[1] * uv.x + vs[2] * uv.y;
 	return p;
 }
 
+struct Shader
+{
 
-struct Shader {
-
-	Shader() {
-
+	Shader()
+	{
 	}
 	VertexAttributes vertexAttributes[3];
 	ShaderUniforms uniforms;
 	ShaderSamplers samplers;
-	virtual vec4 Vertex(const VertexAttributes& attr, int index) {
+	virtual vec4 Vertex(const VertexAttributes &attr, int index)
+	{
 		return vec4(0, 0, 0, 0);
 	};
-	virtual vec4 Fragment(const vec2& uv) {
+	virtual vec4 Fragment(const vec2 &uv)
+	{
 		return vec4(0, 0, 0, 1);
 	}
 };
 
-struct BlinnPhongShader : public Shader {
+struct BlinnPhongShader : public Shader
+{
 
 	VertexOut vsOut[3];
-	BlinnPhongShader() : Shader() {
-
+	BlinnPhongShader() : Shader()
+	{
 	}
 
-	vec4 Vertex(const VertexAttributes& attr, int index) override {
+	vec4 Vertex(const VertexAttributes &attr, int index) override
+	{
 		vertexAttributes[index] = attr;
 		vec3 norm = normalize(uniforms.normalMatrix * attr.normal);
 		vec3 tang = normalize(uniforms.normalMatrix * attr.tangent);
 		vec3 bitan = normalize(uniforms.normalMatrix * attr.bitangent);
 		tang = normalize(tang - norm * dot(tang, norm));
-
 
 		mat3 TBN = mat3(tang, bitan, norm);
 		vec3 pos = vec3(uniforms.mv * vec4(attr.vertex, 1.0f));
@@ -100,7 +106,8 @@ struct BlinnPhongShader : public Shader {
 		return uniforms.mvp * vec4(attr.vertex, 1.0f);
 	}
 
-	vec4 Fragment(const vec2& uv) override {
+	vec4 Fragment(const vec2 &uv) override
+	{
 		vec2 texCoords[3];
 		texCoords[0] = vertexAttributes[0].texCoord;
 		texCoords[1] = vertexAttributes[1].texCoord;
@@ -119,29 +126,119 @@ struct BlinnPhongShader : public Shader {
 		vec3 viewDir = normalize(interp(viewDirs, uv));
 		vec3 lightDir = normalize(interp(lightDirs, uv));
 
-
-
 		vec2 texCoord = interp(texCoords, uv);
 		vec3 norm = normalize(samplers.normal->GetVec3(texCoord));
 		vec3 diffuse = samplers.diffuse->GetVec3(texCoord);
 		float specular = 0;
 		float sDotN = max(dot(lightDir, norm), 0.0f);
-		if (sDotN > 0.0f) {
+		if (sDotN > 0.0f)
+		{
 			vec3 v = viewDir;
 			vec3 h = normalize(v + lightDir);
 			float spec = samplers.specular->GetFloat(texCoord);
-			float specular = std::pow(max(dot(h,norm), 0.0f), specular);
+			float specular = std::pow(max(dot(h, norm), 0.0f), specular);
 		}
-		return vec4(diffuse * ( sDotN + specular), 1.0f);
+		return vec4(diffuse * (sDotN + specular), 1.0f);
 	}
-
-
-	
 };
 
+struct PBRShader : public Shader
+{
+	bool isMetal;
+	vec3 color;
+	float roughness;
+	vec3 lightIntensity = vec3(100.0f, 100.0f, 100.0f);
+	vec4 lightPos;
+	VertexAttributes vertexAttributes[3];
+	ShaderUniforms uniforms;
+	ShaderSamplers samplers;
+	vec3 varyingPosition[3];
+	vec3 varyingNormals[3];
+	PBRShader() : Shader()
+	{
+	}
 
+	vec3 schlickFresnel(float lDotH)
+	{
+		vec3 f0 = vec3(0.04f);
+		if (isMetal)
+		{
+			f0 = color;
+		}
+		return f0 + (vec3(1.0f) - f0) * std::pow(1 - lDotH, 5.f);
+	}
 
-// struct Shader 
+	float geomSmith(float dotProd)
+	{
+		float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
+		float denom = dotProd * (1 - k) + k;
+		return 1.0 / denom;
+	}
+
+	float ggxDistribution(float nDotH)
+	{
+		float alpha2 = std::pow(roughness, 4.0);
+		float d = (nDotH * nDotH) * (alpha2 - 1) + 1;
+		return alpha2 / (glm::pi<float>() * d * d);
+	}
+
+	vec3 microfacetModel(vec3 position, vec3 n)
+	{
+		vec3 diffuseBrdf = vec3(0.0f);
+		if (!isMetal)
+		{
+			diffuseBrdf = color;
+		}
+		vec3 l = vec3(0.0f);
+		if (lightPos.w == 0.0f)
+		{
+			l = normalize(vec3(lightPos));
+		}
+		else
+		{
+			l = vec3(lightPos) - position;
+			float dist = length(l);
+			l = normalize(l);
+			lightIntensity = lightIntensity / (dist * dist);
+		}
+
+		vec3 v = normalize(-position);
+		vec3 h = normalize(v + l);
+		float nDotH = dot(n, h);
+		float lDotH = dot(l, h);
+		float nDotL = max(dot(n, l), 0.0f);
+		float nDotV = dot(n, v);
+		vec3 specBrdf = schlickFresnel(lDotH) * 0.25f * ggxDistribution(nDotH) * geomSmith(nDotL) * geomSmith(nDotV);
+		return (diffuseBrdf + glm::pi<float>() * specBrdf) * lightIntensity * nDotL;
+	}
+
+	vec4 Vertex(const VertexAttributes &attr, int index)
+	{
+		vertexAttributes[index] = attr;
+		varyingNormals[index] = normalize(uniforms.normalMatrix * attr.normal);
+		varyingPosition[index] = vec3(uniforms.mv * vec4(attr.vertex, 1.0f));
+		// vec3 norm = normalize(uniforms.normalMatrix * attr.normal);
+		// vec3 tang = normalize(uniforms.normalMatrix * attr.tangent);
+		// vec3 bitan = normalize(uniforms.normalMatrix * attr.bitangent);
+		// tang = normalize(tang - norm * dot(tang, norm));
+
+		// mat3 TBN = mat3(tang, bitan, norm);
+		// vec3 pos = vec3(uniforms.mv * vec4(attr.vertex, 1.0f));
+		// vsOut[index].lightDir = normalize(TBN * (uniforms.lightPos - pos));
+		// vsOut[index].viewDir = normalize(TBN * (-pos));
+		return uniforms.mvp * vec4(attr.vertex, 1.0f);
+	}
+	vec4 Fragment(const vec2 &uv)
+	{
+
+		vec3 normal = normalize(interp(varyingNormals, uv));
+		vec3 position = interp(varyingPosition, uv);
+		vec3 sum = microfacetModel(position, normal);
+		return vec4(sum, 1);
+	}
+};
+
+// struct Shader
 // {
 // 	mat4 MVP;
 // 	mat4 MV;
@@ -168,7 +265,7 @@ struct BlinnPhongShader : public Shader {
 // 	{
 // 		vec2 interUV = a * varyingUVs[0] + b * varyingUVs[1] + c * varyingUVs[2];
 // 		vec3 interPos = a * varyingPos[0] + b * varyingPos[1] + c * varyingPos[2];
-// 		// vec3 interNorm = a * varyingNormal[0] + b * varyingNormal[1] + c * varyingNormal[2];	
+// 		// vec3 interNorm = a * varyingNormal[0] + b * varyingNormal[1] + c * varyingNormal[2];
 // 		vec3 interNorm = normalize(N * normalTexture->GetColor(interUV));
 // 		vec3 interTangent = normalize(N * tangentTexture->GetColor(interUV));
 // 		vec3 binormal = normalize(cross(interNorm, interTangent)) * tangentTexture->GetColor(interUV).w;

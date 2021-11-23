@@ -4,13 +4,11 @@
 #include <memory>
 #include "PixelBuffer.h"
 #include "DepthBuffer.h"
-#include "Mesh.h"
-#include "Shader.h"
-#include "Camera.h"
+#include "Scene.h"
 class Renderer
 {
 public:
-	Renderer(const char* title, int width, int height);
+	Renderer(const char *title, int width, int height);
 	~Renderer();
 	void Run();
 	void Init();
@@ -20,24 +18,21 @@ public:
 	float GetDelta();
 	void ProcessInput();
 	void Display();
+
 private:
 	void Clear();
 
 	int mWidth;
 	int mHeight;
-	SDL_Window* mWindow;
-	SDL_Surface* mSurface;
+	SDL_Window *mWindow;
+	SDL_Surface *mSurface;
 	Uint32 mTicksCount;
 	bool mIsRunning;
 
 	PixelBuffer pixelBuffer;
 	DepthBuffer depthBuffer;
 
-
-
-	std::vector<Mesh*> meshes;
-	BlinnPhongShader shader;
-	Camera camera;
+	Scene *scene;
 
 	bool mouseFirst = true;
 };
