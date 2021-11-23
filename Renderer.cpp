@@ -7,7 +7,7 @@ Renderer::Renderer(const char* title, int width, int height)
 	, mIsRunning(false)
 	, pixelBuffer(width, height)
 	, depthBuffer(width, height)
-	, camera(vec3(0, 0, 5), vec3(0, 0, 0), vec3(0, 1, 0))
+	, camera(vec3(0, 0, 2), vec3(0, 0, 0), vec3(0, 1, 0))
 	, shader()
 {
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -65,8 +65,15 @@ void Renderer::Display() {
 void Renderer::Init()
 {
 	// auto head = new Mesh("assets/african_head", "african_head");
-	auto mesh = new Mesh("assets/crab", "crab");
+	auto mesh = new Mesh("assets/african_head", "african_head");
+
+	auto eyeinner = new Mesh("assets/african_head", "african_head_eye_inner");
+	auto eyeOuter = new Mesh("assets/african_head", "african_head_eye_outer");
 	meshes.push_back(mesh);
+	// meshes.push_back(eyeOuter);
+	meshes.push_back(eyeinner);
+	
+
 
 }
 

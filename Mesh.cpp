@@ -100,14 +100,14 @@ Mesh::Mesh(const char* filepath, const char* name)
 	std::string diffusefile = std::string(filepath) + "/" + std::string(name) + "_diffuse.tga";
 	diffuseTexture.Load(diffusefile.c_str(), Texture::Type::DIFFUSE);
 
-	// std::string specularfile = std::string(filepath) + "/" + std::string(name) + "_spec.tga";
-	std::string specularfile = std::string(filepath) + "/" + std::string(name) + "_specular.tga";
+	std::string specularfile = std::string(filepath) + "/" + std::string(name) + "_spec.tga";
+	// std::string specularfile = std::string(filepath) + "/" + std::string(name) + "_specular.tga";
 	specularTexture.Load(specularfile.c_str(), Texture::Type::SPECULAR);
 
-	// std::string normtfile = std::string(filepath) + "/" + std::string(name) + "_nm_tangent.tga";
-	std::string normtfile = std::string(filepath) + "/" + std::string(name) + "_normal.tga";
-	normalTexture.Load(normtfile.c_str(), Texture::Type::NORMAL);
-
+	std::string normfile = std::string(filepath) + "/" + std::string(name) + "_nm_tangent.tga";
+	// std::string normtfile = std::string(filepath) + "/" + std::string(name) + "_normal.tga";
+	normalTexture.Load(normfile.c_str(), Texture::Type::NORMAL);
+	std::cout << "loaded " << normfile << std::endl;
 	// std::string normfile = std::string(filepath) + "/" + std::string(name) + "_nm.tga";
 	// normalTexture.Load(normfile.c_str());
 }
