@@ -1,6 +1,6 @@
 #pragma once
-#include "Scene.h"
-#include "Rasterizer.h"
+#include "../Core/Scene.h"
+#include "../Core/Rasterizer.h"
 struct PBRScene : public Scene
 {
     PBRScene()
@@ -17,6 +17,9 @@ struct PBRScene : public Scene
         meshes.push_back(mesh);
         // meshes.push_back(eyeOuter);
         meshes.push_back(eyeinner);
+        glm::mat4 view = camera.GetViewMatrix();
+        vec4 lightPos = view * glm::vec4(1, 1, 3, 0.0f);
+        shader.lightPos = lightPos;
     }
 
     void Update(float delta)
@@ -27,11 +30,11 @@ struct PBRScene : public Scene
         auto mv = view * model;
         shader.uniforms.mvp = proj * view * model;
         shader.uniforms.mv = mv;
-        shader.isMetal = true;
-        shader.roughness = 0.5f;
-        shader.color = vec3(1.f, 0.71f, 0.29f);
-        vec4 lightPos = view * glm::vec4(0, 0, 1, 2.0f);
-        shader.lightPos = lightPos;
+        shader.isMetal = false;
+        shader.roughness = 0.4f;
+        shader.color = vec3(1.f, 1.0f, 1.0f);
+        vec4 lightPos = view * glm::vec4(0, 0, 3, 0.0f);
+        // shader.lightPos = lightPos;
         shader.uniforms.normalMatrix = glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2]));
     }
 

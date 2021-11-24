@@ -1,6 +1,5 @@
 #include "Renderer.h"
-#include "BlinnPhongScene.h"
-#include "PBRScene.h"
+
 Renderer::Renderer(const char *title, int width, int height)
 	: mWidth(width), mHeight(height), mTicksCount(0), mIsRunning(false), pixelBuffer(width, height), depthBuffer(width, height)
 
@@ -34,7 +33,6 @@ Renderer::~Renderer()
 void Renderer::Run()
 {
 	mIsRunning = true;
-	Init();
 	while (mIsRunning)
 	{
 		ProcessInput();
@@ -55,10 +53,10 @@ void Renderer::Display()
 	SDL_UpdateWindowSurface(mWindow);
 }
 
-void Renderer::Init()
+void Renderer::Init(Scene* scene)
 {
-	// scene = new BlinnPhongScene();
-	scene = new PBRScene();
+    this->scene = scene;
+	// scene = new PBRScene();
 	scene->Init();
 }
 

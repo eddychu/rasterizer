@@ -11,7 +11,7 @@ public:
 	Renderer(const char *title, int width, int height);
 	~Renderer();
 	void Run();
-	void Init();
+    void Init(Scene* scene);
 	void Draw();
 	void ShutDown();
 	void Update(float delta);

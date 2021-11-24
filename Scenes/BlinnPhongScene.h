@@ -1,8 +1,8 @@
 #pragma once
-#include "Scene.h"
-#include "Rasterizer.h"
-#include "PixelBuffer.h"
-#include "DepthBuffer.h"
+#include "../Core/Scene.h"
+#include "../Core/Rasterizer.h"
+#include "../Core/PixelBuffer.h"
+#include "../Core/DepthBuffer.h"
 struct BlinnPhongScene : public Scene
 {
     BlinnPhongScene()
