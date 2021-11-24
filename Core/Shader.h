@@ -52,6 +52,8 @@ struct ShaderSamplers
 	Texture *normal;
 };
 
+struct
+
 namespace Interpolator {
     static vec3 interp(vec3 *vs, vec2 uv)
     {
@@ -77,6 +79,7 @@ struct Shader
 	VertexAttributes vertexAttributes[3];
 	ShaderUniforms uniforms;
 	ShaderSamplers samplers;
+
 	virtual vec4 Vertex(const VertexAttributes &attr, int index)
 	{
 		return vec4(0, 0, 0, 0);
