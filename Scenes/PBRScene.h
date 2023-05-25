@@ -4,7 +4,7 @@
 struct PBRScene : public Scene
 {
     PBRScene()
-        : camera(vec3(0, 0, 3), vec3(0, 0, 0), vec3(0, 1, 0)), shader()
+        : camera(vec3(0, 0, 2), vec3(0, 0, 0), vec3(0, 1, 0)), shader()
     {
     }
     void Init()

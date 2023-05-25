@@ -51,24 +51,20 @@ struct ShaderSamplers
 	Texture *specular;
 	Texture *normal;
 };
+struct Interpolator
+{
+	static vec3 interp(vec3 *vs, vec2 uv)
+	{
+		vec3 p = vs[0] * (1 - uv.x - uv.y) + vs[1] * uv.x + vs[2] * uv.y;
+		return p;
+	}
 
-struct
-
-namespace Interpolator {
-    static vec3 interp(vec3 *vs, vec2 uv)
-    {
-        vec3 p = vs[0] * (1 - uv.x - uv.y) + vs[1] * uv.x + vs[2] * uv.y;
-        return p;
-    }
-
-    static vec2 interp(vec2 *vs, vec2 uv)
-    {
-        vec2 p = vs[0] * (1 - uv.x - uv.y) + vs[1] * uv.x + vs[2] * uv.y;
-        return p;
-    }
-}
-
-
+	static vec2 interp(vec2 *vs, vec2 uv)
+	{
+		vec2 p = vs[0] * (1 - uv.x - uv.y) + vs[1] * uv.x + vs[2] * uv.y;
+		return p;
+	}
+};
 
 struct Shader
 {
@@ -130,10 +126,10 @@ struct BlinnPhongShader : public Shader
 		lightDirs[1] = vsOut[1].lightDir;
 		lightDirs[2] = vsOut[2].lightDir;
 
-		vec3 viewDir = normalize(interp(viewDirs, uv));
-		vec3 lightDir = normalize(interp(lightDirs, uv));
+		vec3 viewDir = normalize(Interpolator::interp(viewDirs, uv));
+		vec3 lightDir = normalize(Interpolator::interp(lightDirs, uv));
 
-		vec2 texCoord = interp(texCoords, uv);
+		vec2 texCoord = Interpolator::interp(texCoords, uv);
 		vec3 norm = normalize(samplers.normal->GetVec3(texCoord));
 		vec3 diffuse = samplers.diffuse->GetVec3(texCoord);
 		float specular = 0;
@@ -239,9 +235,9 @@ struct PBRShader : public Shader
 	}
 	vec4 Fragment(const vec2 &uv)
 	{
-		vec2 texCoord = interp(varyingTexCoords, uv);
-		vec3 normal = normalize(interp(varyingNormals, uv));
-		vec3 position = interp(varyingPosition, uv);
+		vec2 texCoord = Interpolator::interp(varyingTexCoords, uv);
+		vec3 normal = normalize(Interpolator::interp(varyingNormals, uv));
+		vec3 position = Interpolator::interp(varyingPosition, uv);
 		vec3 diffuse = samplers.diffuse->GetVec3(texCoord);
 		vec3 sum = diffuse * microfacetModel(position, normal);
 		sum = clamp(sum, 0.0f, 1.0f);
